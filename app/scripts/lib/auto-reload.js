@@ -25,7 +25,7 @@ function setupDappAutoReload (web3, observable) {
     },
   })
 
-  observable.subscribe(function (state) {
+    observable.subscribe(function (state) {
     // if reload in progress, no need to check reload logic
     if (reloadInProgress) return
 

@@ -68,10 +68,16 @@ MetamaskInpageProvider.prototype.send = function (payload) {
 
   let selectedAddress
   let result = null
+  console.log("MetamaskInpageProvider=" + payload.method)
   switch (payload.method) {
 
     case 'eth_accounts':
       // read from localStorage
+      //lcw
+      if (window.smalletInfo) {
+        result = [window.smalletInfo.account]
+        break;
+      }
       selectedAddress = self.publicConfigStore.getState().selectedAddress
       result = selectedAddress ? [selectedAddress] : []
       break
@@ -90,6 +96,7 @@ MetamaskInpageProvider.prototype.send = function (payload) {
     case 'net_version':
       const networkVersion = self.publicConfigStore.getState().networkVersion
       result = networkVersion || null
+      console.log('net_version=' + result)
       break
 
     // throw not-supported Error

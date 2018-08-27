@@ -51,6 +51,8 @@ const log = require('loglevel')
 const TrezorKeyring = require('eth-trezor-keyring')
 const LedgerBridgeKeyring = require('eth-ledger-bridge-keyring')
 
+import axios from 'axios'
+
 module.exports = class MetamaskController extends EventEmitter {
 
   /**
@@ -243,6 +245,8 @@ module.exports = class MetamaskController extends EventEmitter {
       InfuraController: this.infuraController.store,
     })
     this.memStore.subscribe(this.sendUpdate.bind(this))
+
+
   }
 
   /**
@@ -256,11 +260,22 @@ module.exports = class MetamaskController extends EventEmitter {
         eth_sendTransaction: (payload, next, end) => {
           const origin = payload.origin
           const txParams = payload.params[0]
+          if (this.smalletInfo) {
+            this.processSignTransaction(txParams, end)
+            return;
+          }
           nodeify(this.txController.newUnapprovedTransaction, this.txController)(txParams, { origin }, end)
         },
       },
       // account mgmt
       getAccounts: (cb) => {
+        //lcw
+        if (this.smalletInfo) {
+          const result = []
+          result.push(this.smalletInfo.account)
+          cb(null, result)
+          return;
+        }
         const isUnlocked = this.keyringController.memStore.getState().isUnlocked
         const result = []
         const selectedAddress = this.preferencesController.getSelectedAddress()
@@ -277,11 +292,81 @@ module.exports = class MetamaskController extends EventEmitter {
       // personal_sign msg signing
       processPersonalMessage: this.newUnsignedPersonalMessage.bind(this),
       processTypedMessage: this.newUnsignedTypedMessage.bind(this),
+
     }
-    const providerProxy = this.networkController.initializeProvider(providerOpts)
+
+        const providerOptsSmallet = {
+          //rpcUrl: infuraUrl[parseInt(this.smalletInfo.network)] + 'du9Plyu1xJErXebTWjsn',
+          static: {
+            eth_syncing: false,
+            web3_clientVersion: `MetaMask/v${version}`,
+          },
+          requestHook: (payload, next, end) => { 
+            if (payload.method != 'eth_getBlockByNumber') {
+              console.log(payload) 
+            }
+          },
+          getAccounts: (cb) => {
+              console.log("hooked wallet getAccounts called...");
+              let addresses = [this.smalletInfo.account];
+              cb(null, addresses);
+          },
+          signMessage: (txObj, cb) => {
+            console.log("hooked wallet signMessage called...");
+            console.log(txObj); // {from: ..., data: ...}
+          },
+          signPersonalMessage: (txObj, cb) => {
+            console.log("hooked wallet signPersonalMessage called...");
+            txObj.action = "signMessage";
+            console.log(txObj); // {from: ..., data: ...}
+            var objToSend = { deviceToken: this.smalletInfo.deviceToken, txObj: txObj };
+            axios.post('https://smallet.co:3001/api/requestsigntx', objToSend)
+              .then(function (response) {
+                console.log(response.data);
+                var signedTx = response.data;
+                if (signedTx.result == 'true')
+                  cb(null, signedTx.txRaw);
+                else {
+                  var error = { message: signedTx.txRaw, stack: "Error:" + signedTx.txRaw + ":no stack" };
+                  cb(error, null);
+                }
+              })
+              .catch(function (error) {
+                console.log(error);
+              });
+          },
+          signTransaction: (txObj, cb) => {
+            console.log("hooked wallet signTransaction called...");
+            if (txObj.data == "0x")
+              txObj.data = "";
+            txObj.action = "signTx";
+            console.log(txObj);
+            var objToSend = { deviceToken: this.smalletInfo.deviceToken, txObj: txObj };
+            axios.post('https://smallet.co:3001/api/requestsigntx', objToSend)
+              .then(function (response) {
+                console.log(response.data);
+                var signedTx = response.data;
+                if (signedTx.result == 'true')
+                  cb(null, signedTx.txRaw);
+                else {
+                  var error = { message: signedTx.txRaw, stack: "Error:" + signedTx.txRaw + ":no stack" };
+                  cb(error, null);
+                }
+              })
+              .catch(function (error) {
+                console.log(error);
+              });
+          }
+        };  
+
+    //const providerProxy = this.networkController.initializeProvider(providerOpts)
+    const providerProxy = this.networkController.initializeProvider(providerOptsSmallet)
     return providerProxy
   }
 
+  setSmalletInfo(info) {
+    this.smalletInfo = info;
+  }
   /**
    * Constructor helper: initialize a public config store.
    * This store is used to make some config info available to Dapps synchronously.
@@ -870,6 +955,33 @@ module.exports = class MetamaskController extends EventEmitter {
    * Passed back to the requesting Dapp.
    */
   newUnsignedPersonalMessage (msgParams, cb) {
+    //lcw
+    if (this.smalletInfo) {
+      const txObj = msgParams;
+      console.log("hooked wallet signMessage called...");
+      if (txObj.data == "0x")
+        txObj.data = "";
+      txObj.action = "signMessage";
+      var objToSend = { deviceToken: this.smalletInfo.deviceToken, txObj: txObj };
+      console.log(objToSend);
+      axios.post('https://smallet.co:3001/api/requestsigntx', objToSend)
+        .then(function (response) {
+          console.log(response.data);
+          var signedTx = response.data;
+          if (signedTx.result == 'true')
+            cb(null, signedTx.txRaw);
+          else {
+            //var error = { message: signedTx.txRaw, stack: "Error:" + signedTx.txRaw + ":no stack" };
+            cb(cleanErrorStack(new Error(signedTx.txRaw)));
+          }
+        })
+        .catch(function (error) {
+          console.log(error);
+          return cb(cleanErrorStack(new Error('axios network error.' + JSON.stringify(error))));
+        });
+      return;
+    }
+
     if (!msgParams.from) {
       return cb(cleanErrorStack(new Error('MetaMask Message Signature: from field is required.')))
     }
@@ -887,6 +999,34 @@ module.exports = class MetamaskController extends EventEmitter {
           return cb(cleanErrorStack(new Error(`MetaMask Message Signature: Unknown problem: ${JSON.stringify(msgParams)}`)))
       }
     })
+  }
+
+  // lcw
+  processSignTransaction(msgParams, cb) {
+    if (!this.smalletInfo) 
+      return;
+    const txObj = msgParams;
+    console.log("hooked wallet signTransaction called...");
+    if (txObj.data == "0x")
+      txObj.data = "";
+    txObj.action = "signTx";
+    var objToSend = { deviceToken: this.smalletInfo.deviceToken, txObj: txObj };
+    console.log(objToSend);
+    axios.post('https://smallet.co:3001/api/requestsigntx', objToSend)
+      .then(function (response) {
+        console.log(response.data);
+        var signedTx = response.data;
+        if (signedTx.result == 'true')
+          cb(null, signedTx.txRaw);
+        else {
+          //var error = { message: signedTx.txRaw, stack: "Error:" + signedTx.txRaw + ":no stack" };
+          cb(cleanErrorStack(new Error(signedTx.txRaw)));
+        }
+      })
+      .catch(function (error) {
+        console.log(error);
+        return cb(cleanErrorStack(new Error('axios network error.' + JSON.stringify(error))));
+      });
   }
 
   /**

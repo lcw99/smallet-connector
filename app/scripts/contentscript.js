@@ -20,7 +20,43 @@ const inpageBundle = inpageContent + inpageSuffix
 
 if (shouldInjectWeb3()) {
   setupInjection()
-  setupStreams()
+  // lcw
+  //setupStreams()
+  const pageStream = new LocalMessageDuplexStream({
+    name: 'contentscript',
+    target: 'inpage',
+  })
+
+  const pluginPort = extension.runtime.connect({ name: 'contentscript' })
+  const pluginStream = new PortStream(pluginPort)
+
+  // forward communication plugin->inpage
+  pump(
+    pageStream,
+    pluginStream,
+    pageStream,
+    (err) => logStreamDisconnectWarning('MetaMask Contentscript Forwarding', err)
+  )
+
+/*
+  pageStream.on('data', (data) => {
+    console.log("here is contentscript=" + data.name)
+    console.log(data)
+  })
+*/  
+
+  chrome.runtime.sendMessage({action: "getSmalletInfo"}, function(response) { //==> to backgroud.js
+    console.log("contentscript response=");
+    console.log(response);
+    let event = new CustomEvent('SmalletConnet', { 
+      detail: {
+        account: response.account, 
+        deviceToken: response.deviceToken, 
+        network: response.network
+      }
+    });
+    window.dispatchEvent(event);  //==> to inpage.js
+ });
 }
 
 /**
@@ -44,6 +80,7 @@ function setupInjection () {
  * Sets up two-way communication streams between the
  * browser extension and local per-page browser context
  */
+ 
 function setupStreams () {
   // setup communication to page and plugin
   const pageStream = new LocalMessageDuplexStream({

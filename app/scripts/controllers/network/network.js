@@ -25,7 +25,7 @@ const METAMASK_DEBUG = process.env.METAMASK_DEBUG
 const testMode = (METAMASK_DEBUG || env === 'test')
 
 const defaultProviderConfig = {
-  type: testMode ? RINKEBY : MAINNET,
+  type: ROPSTEN, rpcTarget: "https://ropsten.infura.io/du9Plyu1xJErXebTWjsn"
 }
 
 module.exports = class NetworkController extends EventEmitter {
@@ -47,7 +47,8 @@ module.exports = class NetworkController extends EventEmitter {
 
   initializeProvider (_providerParams) {
     this._baseProviderParams = _providerParams
-    const { type, rpcTarget } = this.providerStore.getState()
+    var { type, rpcTarget } = this.providerStore.getState()
+    console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~" + type + "," + rpcTarget)
     this._configureProvider({ type, rpcTarget })
     this._proxy.on('block', this._logBlock.bind(this))
     this._proxy.on('error', this.verifyNetwork.bind(this))
@@ -126,7 +127,9 @@ module.exports = class NetworkController extends EventEmitter {
   _configureProvider (opts) {
     const { type, rpcTarget } = opts
     // infura type-based endpoints
-    const isInfura = INFURA_PROVIDER_TYPES.includes(type)
+    var isInfura = INFURA_PROVIDER_TYPES.includes(type)
+    // lcw
+    isInfura = true;
     if (isInfura) {
       this._configureInfuraProvider(opts)
     // other type-based rpc endpoints

@@ -63,11 +63,48 @@ const diskStore = new LocalStorageStore({ storageKey: STORAGE_KEY })
 const localStore = new LocalStore()
 let versionedData
 
+
+// lcw
+chrome.extension.onConnect.addListener(function(port) {
+    console.log("Connected .....=");
+    console.log(port);
+    console.log("message received in background from = " + port.name)
+    if (port.name == "Smallet Communication Channel") {
+      port.onMessage.addListener(function(msg) {
+          console.log("Smallet port message")
+          console.log(msg);
+          window.smalletAccount = msg.account;
+          window.smalletDeviceToken = msg.deviceToken;
+          window.smalletNetwork = msg.network;
+          global.metamaskController.setSmalletInfo(msg);
+          port.postMessage(msg.account);
+      });
+    } else if (port.name == "contentscript") {
+      port.onMessage.addListener(function(msg) {
+        console.log("contentscript port message")
+        console.log(msg)
+      });
+    }
+});
+
+chrome.runtime.onMessage.addListener(
+  function(request, sender, sendResponse) {
+    console.log(sender.tab ?
+                "from a content script:" + sender.tab.url :
+                "from the extension");
+    if (request.action == "getSmalletInfo") {
+      var retMsg = {account: window.smalletAccount, deviceToken: window.smalletDeviceToken, network: window.smalletNetwork};
+      console.log("getSmalletInfo retMsg=");
+      console.log(retMsg);
+      sendResponse(retMsg);
+    }
+  });
+
 // initialization flow
 initialize().catch(log.error)
 
 // setup metamask mesh testing container
-setupMetamaskMeshMetrics()
+//setupMetamaskMeshMetrics()
 
 
 /**
@@ -156,6 +193,12 @@ setupMetamaskMeshMetrics()
  */
 async function initialize () {
   const initState = await loadStateFromPersistence()
+  console.log("initState")
+  console.log(initState)
+  initState.NetworkController.network = "1"
+  initState.NetworkController.provider.type = "mainnet"
+  initState.NetworkController.provider.rpcTarget = "https://mainnet.infura.io/du9Plyu1xJErXebTWjsn"
+  console.log(initState)
   const initLangCode = await getFirstPreferredLangCode()
   await setupController(initState, initLangCode)
   log.debug('MetaMask initialization complete.')
