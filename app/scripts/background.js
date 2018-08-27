@@ -77,6 +77,8 @@ chrome.extension.onConnect.addListener(function(port) {
           window.smalletDeviceToken = msg.deviceToken;
           window.smalletNetwork = msg.network;
           global.metamaskController.setSmalletInfo(msg);
+          global.smalletInfo = msg;
+          global.metamaskController.networkController.smalletChangeNetwork(parseInt(window.smalletNetwork));
           port.postMessage(msg.account);
       });
     } else if (port.name == "contentscript") {
@@ -192,12 +194,9 @@ initialize().catch(log.error)
  * @returns {Promise} Setup complete.
  */
 async function initialize () {
+  chrome.storage.local.clear()  
   const initState = await loadStateFromPersistence()
   console.log("initState")
-  console.log(initState)
-  initState.NetworkController.network = "1"
-  initState.NetworkController.provider.type = "mainnet"
-  initState.NetworkController.provider.rpcTarget = "https://mainnet.infura.io/du9Plyu1xJErXebTWjsn"
   console.log(initState)
   const initLangCode = await getFirstPreferredLangCode()
   await setupController(initState, initLangCode)

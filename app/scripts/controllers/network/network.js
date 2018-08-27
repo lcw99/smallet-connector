@@ -25,7 +25,7 @@ const METAMASK_DEBUG = process.env.METAMASK_DEBUG
 const testMode = (METAMASK_DEBUG || env === 'test')
 
 const defaultProviderConfig = {
-  type: ROPSTEN, rpcTarget: "https://ropsten.infura.io/du9Plyu1xJErXebTWjsn"
+  type: ROPSTEN
 }
 
 module.exports = class NetworkController extends EventEmitter {
@@ -122,6 +122,14 @@ module.exports = class NetworkController extends EventEmitter {
     this.setNetworkState('loading')
     this._configureProvider(opts)
     this.emit('networkDidChange')
+  }
+
+
+  smalletChangeNetwork (smalletNetwork) {
+    const networkType = [ MAINNET, ROPSTEN, KOVAN, RINKEBY ]
+    const opts = { type: networkType[smalletNetwork] };
+    console.log(opts)
+    this._configureProvider(opts)    
   }
 
   _configureProvider (opts) {

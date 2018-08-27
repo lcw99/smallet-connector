@@ -55,6 +55,22 @@ function MetamaskInpageProvider (connectionStream) {
 MetamaskInpageProvider.prototype.sendAsync = function (payload, cb) {
   const self = this
 
+  switch (payload.method) {
+
+    case 'eth_accounts':
+      // read from localStorage
+      //lcw
+      if (window.smalletInfo) {
+        var result = [window.smalletInfo.account];
+        //console.log(result)
+        if (cb)
+          cb(null, {id: payload.id, jsonrpc: payload.jsonrpc, result: result});
+        else 
+          return new Promise((resolve, reject) => { resolve(result) });
+      }
+      return;
+  }
+
   if (payload.method === 'eth_signTypedData') {
     console.warn('MetaMask: This experimental version of eth_signTypedData will be deprecated in the next release in favor of the standard as defined in EIP-712. See https://git.io/fNzPl for more information on the new standard.')
   }
@@ -84,6 +100,10 @@ MetamaskInpageProvider.prototype.send = function (payload) {
 
     case 'eth_coinbase':
       // read from localStorage
+      if (window.smalletInfo) {
+        result = window.smalletInfo.account
+        break;
+      }
       selectedAddress = self.publicConfigStore.getState().selectedAddress
       result = selectedAddress || null
       break
@@ -94,6 +114,14 @@ MetamaskInpageProvider.prototype.send = function (payload) {
       break
 
     case 'net_version':
+      if (window.smalletInfo) {
+        var network = parseInt(window.smalletInfo.network);
+        const chainIds = ["1", "3", "42", "4"];
+        //const chainId = ["main", "ropsten", "kovan", "rinkeby"];
+        result = chainIds[network]
+        console.log('net_version=' + result)
+        break;        
+      }
       const networkVersion = self.publicConfigStore.getState().networkVersion
       result = networkVersion || null
       console.log('net_version=' + result)
