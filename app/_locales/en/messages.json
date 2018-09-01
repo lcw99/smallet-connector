@@ -39,11 +39,11 @@
     "message": "Amount + Gas"
   },
   "appDescription": {
-    "message": "Ethereum Browser Extension",
+    "message": "Ethereum Smallet Browser Extension",
     "description": "The description of the application"
   },
   "appName": {
-    "message": "Smallet",
+    "message": "Smallet Connect",
     "description": "The name of the application"
   },
   "approve": {

@@ -63,6 +63,16 @@ const diskStore = new LocalStorageStore({ storageKey: STORAGE_KEY })
 const localStore = new LocalStore()
 let versionedData
 
+//lcw
+ function setSmalletInfoGlobally(info) {
+  console.log(info)
+  window.smalletAccount = info.account;
+  window.smalletDeviceToken = info.deviceToken;
+  window.smalletNetwork = info.network;
+  global.metamaskController.setSmalletInfo(info);
+  global.smalletInfo = info;
+  global.metamaskController.networkController.smalletChangeNetwork(parseInt(window.smalletNetwork));
+}
 
 // lcw
 chrome.extension.onConnect.addListener(function(port) {
@@ -73,13 +83,11 @@ chrome.extension.onConnect.addListener(function(port) {
       port.onMessage.addListener(function(msg) {
           console.log("Smallet port message")
           console.log(msg);
-          window.smalletAccount = msg.account;
-          window.smalletDeviceToken = msg.deviceToken;
-          window.smalletNetwork = msg.network;
-          global.metamaskController.setSmalletInfo(msg);
-          global.smalletInfo = msg;
-          global.metamaskController.networkController.smalletChangeNetwork(parseInt(window.smalletNetwork));
-          port.postMessage(msg.account);
+
+          setSmalletInfoGlobally(msg);
+
+          chrome.storage.sync.set({"smallet-info-v1": msg}, function() { console.log("smallet info saved") });
+          //port.postMessage(msg.account);
       });
     } else if (port.name == "contentscript") {
       port.onMessage.addListener(function(msg) {
@@ -98,6 +106,7 @@ chrome.runtime.onMessage.addListener(
       var retMsg = {account: window.smalletAccount, deviceToken: window.smalletDeviceToken, network: window.smalletNetwork};
       console.log("getSmalletInfo retMsg=");
       console.log(retMsg);
+      global.metamaskController.networkController.smalletChangeNetwork(parseInt(window.smalletNetwork));
       sendResponse(retMsg);
     }
   });
@@ -201,7 +210,14 @@ async function initialize () {
   const initLangCode = await getFirstPreferredLangCode()
   await setupController(initState, initLangCode)
   log.debug('MetaMask initialization complete.')
-  ipfsHandle = ipfsContent(initState.NetworkController.provider)
+  //ipfsHandle = ipfsContent(initState.NetworkController.provider)
+
+  chrome.storage.sync.get("smallet-info-v1", function (smalletInfo) {
+    console.log("smallet info from storage")
+    console.log(smalletInfo)
+    if (smalletInfo)
+      setSmalletInfoGlobally(smalletInfo["smallet-info-v1"]);
+  });
 }
 
 //
@@ -474,17 +490,21 @@ function setupController (initState, initLangCode) {
  * Opens the browser popup for user confirmation
  */
 function triggerUi () {
+  /*
   extension.tabs.query({ active: true }, tabs => {
     const currentlyActiveMetamaskTab = Boolean(tabs.find(tab => openMetamaskTabsIDs[tab.id]))
     if (!popupIsOpen && !currentlyActiveMetamaskTab && !notificationIsOpen) {
       notificationManager.showPopup()
     }
   })
+  */
 }
 
 // On first install, open a window to MetaMask website to how-it-works.
+/*
 extension.runtime.onInstalled.addListener(function (details) {
   if ((details.reason === 'install') && (!METAMASK_DEBUG)) {
     extension.tabs.create({url: 'https://metamask.io/#how-it-works'})
   }
 })
+*/

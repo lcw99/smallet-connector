@@ -76,6 +76,10 @@ window.addEventListener('SmalletConnet', function (event) {
             console.log("hooked wallet signMessage called...");
             console.log(txObj); // {from: ..., data: ...}
           },
+          approvePersonalMessage: (txObj, cb) => {
+            console.log("hooked wallet approvePersonalMessage called...");
+            cb(null, true);
+          },
           signPersonalMessage: (txObj, cb) => {
             console.log("hooked wallet signPersonalMessage called...");
             txObj.action = "signMessage";

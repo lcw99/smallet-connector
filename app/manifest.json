@@ -62,9 +62,8 @@
     "notifications"
   ],
   "web_accessible_resources": [
-    "inpage.js",
-    "phishing.html",
-    "myzero.js"
+    "inpage-mobile.js",
+    "phishing.html"
   ],
   "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
   "externally_connectable": {

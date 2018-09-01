@@ -264,6 +264,7 @@ gulp.task('fmt-scss', function () {
 
 const buildJsFiles = [
   'inpage',
+  'inpage-mobile',
   'contentscript',
   'background',
   'ui',
