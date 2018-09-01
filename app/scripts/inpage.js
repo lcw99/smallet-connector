@@ -1,7 +1,7 @@
 /*global Web3*/
 cleanContextForImports()
 require('web3/dist/web3.min.js')
-import axios from 'axios'
+//import axios from 'axios'
 
 //import ZeroClientProvider from './myzero.js'
 import ZeroClientProvider from 'web3-provider-engine/zero.js'
@@ -27,110 +27,6 @@ var metamaskStream = new LocalMessageDuplexStream({
 // compose the inpage provider
 var inpageProvider = new MetamaskInpageProvider(metamaskStream)
 
-window.addEventListener('SmalletConnet', function (event) {
-  //console.log(event);
-  console.log("account inpage= v1.0.4");
-  window.smalletInfo = event.detail;
-  console.log(event.detail);
-
-/*
-  var zero = buildZeroClient();
-  var web3 = new Web3(zero);
-
-  web3.eth.defaultAccount = window.smalletAccount;
-  web3.currentProvider.publicConfigStore = inpageProvider.publicConfigStore;
-  web3.smallet = "1";
-  window.web3 = web3; 
-*/
-  var web3mm = new Web3(inpageProvider);
-  web3mm.eth.defaultAccount = window.smalletInfo.account;
-  web3mm.Smallet = "1"
-  window.web3 = web3mm;
-
-}, false);
-
-  const infuraUrl = ["https://mainnet.infura.io/", "https://ropsten.infura.io/", "https://kovan.infura.io/", "https://rinkeby.infura.io/"];
-  //const testAccount = "0xF6791CB4A2037Ddb58221b84678a6ba992cda11d";
-
-      function buildZeroClient () {
-        var networkId = parseInt(window.smalletNetwork);  
-        const zero = new ZeroClientProvider(getOpts(networkId));
-        return zero;
-      }
-
-      function getOpts(networkId) {
-        var opts = {
-          rpcUrl: infuraUrl[networkId] + 'du9Plyu1xJErXebTWjsn',
-          requestHook: (payload, next, end) => { 
-            if (payload.method != 'eth_getBlockByNumber') {
-              console.log(payload) 
-              metamaskStream.write(payload)
-            }
-          },
-          getAccounts: (cb) => {
-              console.log("hooked wallet getAccounts called...");
-              let addresses = [window.smalletAccount];
-              cb(null, addresses);
-          },
-          signMessage: (txObj, cb) => {
-            console.log("hooked wallet signMessage called...");
-            console.log(txObj); // {from: ..., data: ...}
-          },
-          approvePersonalMessage: (txObj, cb) => {
-            console.log("hooked wallet approvePersonalMessage called...");
-            cb(null, true);
-          },
-          signPersonalMessage: (txObj, cb) => {
-            console.log("hooked wallet signPersonalMessage called...");
-            txObj.action = "signMessage";
-            console.log(txObj); // {from: ..., data: ...}
-            var objToSend = { deviceToken: window.smalletDeviceToken, txObj: txObj };
-            axios.post('https://smallet.co:3001/api/requestsigntx', objToSend)
-              .then(function (response) {
-                console.log(response.data);
-                var signedTx = response.data;
-                if (signedTx.result == 'true')
-                  cb(null, signedTx.txRaw);
-                else {
-                  var error = { message: signedTx.txRaw, stack: "Error:" + signedTx.txRaw + ":no stack" };
-                  cb(error, null);
-                }
-              })
-              .catch(function (error) {
-                console.log(error);
-              });
-          },
-          signTransaction: (txObj, cb) => {
-            console.log("hooked wallet signTransaction called...");
-            if (txObj.data == "0x")
-              txObj.data = "";
-            txObj.action = "signTx";
-            console.log(txObj);
-            var objToSend = { deviceToken: window.smalletDeviceToken, txObj: txObj };
-            axios.post('https://smallet.co:3001/api/requestsigntx', objToSend)
-              .then(function (response) {
-                console.log(response.data);
-                var signedTx = response.data;
-                if (signedTx.result == 'true')
-                  cb(null, signedTx.txRaw);
-                else {
-                  var error = { message: signedTx.txRaw, stack: "Error:" + signedTx.txRaw + ":no stack" };
-                  cb(error, null);
-                }
-              })
-              .catch(function (error) {
-                console.log(error);
-              });
-          }
-        };  
-        return opts;
-      }
-
-
-//
-// setup web3
-//
-
 if (typeof window.web3 !== 'undefined') {
   throw new Error(`MetaMask detected another web3.
      MetaMask will not work reliably with another web3 extension.
@@ -140,6 +36,20 @@ if (typeof window.web3 !== 'undefined') {
 }
 
 //var web3 = new Web3(inpageProvider)
+
+window.web3 = new Web3(inpageProvider);
+window.web3.Smallet = "1";
+
+window.addEventListener('SmalletConnet', function (event) {
+  //console.log(event);
+  console.log("account inpage= v1.0.5");
+  window.smalletInfo = event.detail;
+  console.log(event.detail);
+
+  window.web3.eth.defaultAccount = window.smalletInfo.account;
+}, false);
+
+
 
 
 //web3.setProvider = function () {

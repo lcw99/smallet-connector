@@ -80,7 +80,7 @@ chrome.extension.onConnect.addListener(function(port) {
     console.log(port);
     console.log("message received in background from = " + port.name)
     if (port.name == "Smallet Communication Channel") {
-      port.onMessage.addListener(function(msg) {
+      port.onMessage.addListener(function smalletMsgHandler(msg) {
           console.log("Smallet port message")
           console.log(msg);
 
@@ -88,11 +88,13 @@ chrome.extension.onConnect.addListener(function(port) {
 
           chrome.storage.sync.set({"smallet-info-v1": msg}, function() { console.log("smallet info saved") });
           //port.postMessage(msg.account);
+          port.onMessage.removeListener(smalletMsgHandler)
       });
     } else if (port.name == "contentscript") {
-      port.onMessage.addListener(function(msg) {
+      port.onMessage.addListener(function contentscriptMsgHandler(msg) {
         console.log("contentscript port message")
         console.log(msg)
+        port.onMessage.removeListener(contentscriptMsgHandler)
       });
     }
 });
