@@ -76,25 +76,24 @@ let versionedData
 
 // lcw
 chrome.extension.onConnect.addListener(function(port) {
-    console.log("Connected .....=");
+    console.log("Connected .....");
     console.log(port);
     console.log("message received in background from = " + port.name)
-    if (port.name == "Smallet Communication Channel") {
+    if (port.name == "popup") {
       port.onMessage.addListener(function smalletMsgHandler(msg) {
-          console.log("Smallet port message")
-          console.log(msg);
+          console.log("from popup msg")
 
           setSmalletInfoGlobally(msg);
 
           chrome.storage.sync.set({"smallet-info-v1": msg}, function() { console.log("smallet info saved") });
           //port.postMessage(msg.account);
-          port.onMessage.removeListener(smalletMsgHandler)
+          //port.onMessage.removeListener(smalletMsgHandler)
       });
     } else if (port.name == "contentscript") {
       port.onMessage.addListener(function contentscriptMsgHandler(msg) {
         console.log("contentscript port message")
         console.log(msg)
-        port.onMessage.removeListener(contentscriptMsgHandler)
+        //port.onMessage.removeListener(contentscriptMsgHandler)
       });
     }
 });
@@ -108,7 +107,9 @@ chrome.runtime.onMessage.addListener(
       var retMsg = {account: window.smalletAccount, deviceToken: window.smalletDeviceToken, network: window.smalletNetwork};
       console.log("getSmalletInfo retMsg=");
       console.log(retMsg);
-      global.metamaskController.networkController.smalletChangeNetwork(parseInt(window.smalletNetwork));
+      if (window.smalletNetworkPrev != window.smalletNetwork)
+        global.metamaskController.networkController.smalletChangeNetwork(parseInt(window.smalletNetwork));
+      window.smalletNetworkPrev = window.smalletNetwork;
       sendResponse(retMsg);
     }
   });

@@ -55,6 +55,7 @@ function MetamaskInpageProvider (connectionStream) {
 MetamaskInpageProvider.prototype.sendAsync = function (payload, cb) {
   const self = this
 
+  //console.log(payload)
   switch (payload.method) {
 
     case 'eth_accounts':

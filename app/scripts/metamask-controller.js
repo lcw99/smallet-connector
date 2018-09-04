@@ -1306,6 +1306,7 @@ module.exports = class MetamaskController extends EventEmitter {
     // setup multiplexing
     const mux = setupMultiplex(connectionStream)
     // connect features
+    const smalletStream = mux.createStream('smalletConnect')
     this.setupControllerConnection(mux.createStream('controller'))
     this.setupProviderConnection(mux.createStream('provider'), originDomain)
   }

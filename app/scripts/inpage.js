@@ -4,7 +4,7 @@ require('web3/dist/web3.min.js')
 //import axios from 'axios'
 
 //import ZeroClientProvider from './myzero.js'
-import ZeroClientProvider from 'web3-provider-engine/zero.js'
+//import ZeroClientProvider from 'web3-provider-engine/zero.js'
 
 const log = require('loglevel')
 const LocalMessageDuplexStream = require('post-message-stream')
@@ -55,7 +55,7 @@ window.addEventListener('SmalletConnet', function (event) {
 //web3.setProvider = function () {
 //  log.debug('Smallet - overrode web3.setProvider')
 //}
-log.debug('Smallet - injected web3')
+log.debug('Smallet - injected web3 - v1.0.5')
 
 //setupDappAutoReload(web3, inpageProvider.publicConfigStore)
 

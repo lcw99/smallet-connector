@@ -34,7 +34,14 @@ window.resultCallback  = function (newId, result) {
   console.log(callbackInfo)
   result.id = callbackInfo.orgId;
   console.log(result)
-  callbackInfo.callback(null, result)
+  if (typeof result.result == "string") {
+    const r = result.result.toLowerCase();
+    if (r.indexOf("error") >= 0)
+      callbackInfo.callback(result.result, null);
+    else
+      callbackInfo.callback(null, result)
+  } else
+    callbackInfo.callback(null, result)
   delete window.callbackMapper[newId];
   return "callback ok"
 }
