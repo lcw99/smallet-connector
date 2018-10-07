@@ -126,8 +126,13 @@ module.exports = class NetworkController extends EventEmitter {
 
 
   smalletChangeNetwork (smalletNetwork) {
-    const networkType = [ MAINNET, ROPSTEN, KOVAN, RINKEBY ]
-    const opts = { type: networkType[smalletNetwork] };
+    //const networkType = [ MAINNET, ROPSTEN, KOVAN, RINKEBY ]
+    //const opts = { type: networkType[smalletNetwork] };
+
+    //lcw
+    const infuraUrl = ["https://mainnet.infura.io/v3/", "https://ropsten.infura.io/v3/", "https://kovan.infura.io/v3/", "https://rinkeby.infura.io/v3/"];
+    const rpcUrl = infuraUrl[smalletNetwork] + 'e11561e8c5d74365b497fb0a5fdb0b01';
+    const opts = { type: 'rpc', rpcTarget: rpcUrl };
     console.log(opts)
     this._configureProvider(opts)    
   }
@@ -136,8 +141,6 @@ module.exports = class NetworkController extends EventEmitter {
     const { type, rpcTarget } = opts
     // infura type-based endpoints
     var isInfura = INFURA_PROVIDER_TYPES.includes(type)
-    // lcw
-    isInfura = true;
     if (isInfura) {
       this._configureInfuraProvider(opts)
     // other type-based rpc endpoints

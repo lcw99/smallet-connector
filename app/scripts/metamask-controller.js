@@ -258,13 +258,11 @@ module.exports = class MetamaskController extends EventEmitter {
         eth_syncing: false,
         web3_clientVersion: `MetaMask/v${version}`,
         eth_sendTransaction: (payload, next, end) => {
+          console.log("lcw:eth_sendTransaction in metamask controller=" + this.smalletInfo);
           const origin = payload.origin
           const txParams = payload.params[0]
-          if (this.smalletInfo) {
-            this.processSignTransaction(txParams, end)
-            return;
-          }
-          nodeify(this.txController.newUnapprovedTransaction, this.txController)(txParams, { origin }, end)
+          this.processSignTransaction(txParams, end)
+          //nodeify(this.txController.newUnapprovedTransaction, this.txController)(txParams, { origin }, end)
         },
       },
       // account mgmt
@@ -296,7 +294,6 @@ module.exports = class MetamaskController extends EventEmitter {
     }
 
         const providerOptsSmallet = {
-          //rpcUrl: infuraUrl[parseInt(this.smalletInfo.network)] + 'du9Plyu1xJErXebTWjsn',
           static: {
             eth_syncing: false,
             web3_clientVersion: `MetaMask/v${version}`,
@@ -307,20 +304,39 @@ module.exports = class MetamaskController extends EventEmitter {
             }
           },
           getAccounts: (cb) => {
-              console.log("hooked wallet getAccounts called...");
               let addresses = [this.smalletInfo.account];
+              console.log("hooked wallet getAccounts called=" + this.smalletInfo.account);
               cb(null, addresses);
+          },
+          signTypedMessage: (msgParams, cb) => {
+              cb("{error: not supported", null);
           },
           signMessage: (txObj, cb) => {
             console.log("hooked wallet signMessage called...");
             console.log(txObj); // {from: ..., data: ...}
+            txObj.action = "signMessageRaw";
+            var objToSend = { deviceToken: this.smalletInfo.deviceToken, txObj: txObj };
+            axios.post('https://smallet.co:3001/api/requestsigntx', objToSend, { timeout: 120000 })
+              .then(function (response) {
+                console.log(response.data);
+                var signedTx = response.data;
+                if (signedTx.result == 'true')
+                  cb(null, signedTx.txRaw);
+                else {
+                  var error = { message: signedTx.txRaw, stack: "Error:" + signedTx.txRaw + ":no stack" };
+                  cb(error, null);
+                }
+              })
+              .catch(function (error) {
+                console.log(error);
+              });
           },
           signPersonalMessage: (txObj, cb) => {
             console.log("hooked wallet signPersonalMessage called...");
             txObj.action = "signMessage";
             console.log(txObj); // {from: ..., data: ...}
             var objToSend = { deviceToken: this.smalletInfo.deviceToken, txObj: txObj };
-            axios.post('https://smallet.co:3001/api/requestsigntx', objToSend)
+            axios.post('https://smallet.co:3001/api/requestsigntx', objToSend, { timeout: 120000 })
               .then(function (response) {
                 console.log(response.data);
                 var signedTx = response.data;
@@ -336,13 +352,14 @@ module.exports = class MetamaskController extends EventEmitter {
               });
           },
           signTransaction: (txObj, cb) => {
-            console.log("hooked wallet signTransaction called...");
+            console.log("lcw:signTransaction in opts called...");
+            //debugger
             if (txObj.data == "0x")
               txObj.data = "";
             txObj.action = "signTx";
             console.log(txObj);
             var objToSend = { deviceToken: this.smalletInfo.deviceToken, txObj: txObj };
-            axios.post('https://smallet.co:3001/api/requestsigntx', objToSend)
+            axios.post('https://smallet.co:3001/api/requestsigntx', objToSend, { timeout: 120000 }) // 2 min timeout
               .then(function (response) {
                 console.log(response.data);
                 var signedTx = response.data;
@@ -354,7 +371,9 @@ module.exports = class MetamaskController extends EventEmitter {
                 }
               })
               .catch(function (error) {
+                console.log("lcw:signTransaction axio catch")
                 console.log(error);
+                cb(error, null);
               });
           }
         };  
@@ -958,7 +977,7 @@ module.exports = class MetamaskController extends EventEmitter {
     //lcw
     if (this.smalletInfo) {
       const txObj = msgParams;
-      console.log("hooked wallet signMessage called...");
+      console.log("lcw:newUnsignedPersonalMessage called...");
       if (txObj.data == "0x")
         txObj.data = "";
       txObj.action = "signMessage";
@@ -1003,10 +1022,12 @@ module.exports = class MetamaskController extends EventEmitter {
 
   // lcw
   processSignTransaction(msgParams, cb) {
-    if (!this.smalletInfo) 
+    if (!this.smalletInfo) {
+      cb(cleanErrorStack(new Error('lcw:no smallet info--------------------------------------------------')));
       return;
+    }
     const txObj = msgParams;
-    console.log("hooked wallet signTransaction called...");
+    console.log("lcw:processSignTransaction in metamask-controller...");
     if (txObj.data == "0x")
       txObj.data = "";
     txObj.action = "signTx";

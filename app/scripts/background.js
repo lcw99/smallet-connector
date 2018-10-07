@@ -75,7 +75,7 @@ let versionedData
 }
 
 // lcw
-chrome.extension.onConnect.addListener(function(port) {
+extension.runtime.onConnect.addListener(function(port) {
     console.log("Connected .....");
     console.log(port);
     console.log("message received in background from = " + port.name)
@@ -85,20 +85,22 @@ chrome.extension.onConnect.addListener(function(port) {
 
           setSmalletInfoGlobally(msg);
 
-          chrome.storage.sync.set({"smallet-info-v1": msg}, function() { console.log("smallet info saved") });
+          extension.storage.sync.set({"smallet-info-v1": msg}, function() { console.log("smallet info saved") });
           //port.postMessage(msg.account);
           //port.onMessage.removeListener(smalletMsgHandler)
       });
     } else if (port.name == "contentscript") {
+      /*
       port.onMessage.addListener(function contentscriptMsgHandler(msg) {
         console.log("contentscript port message")
         console.log(msg)
         //port.onMessage.removeListener(contentscriptMsgHandler)
       });
+      */
     }
 });
 
-chrome.runtime.onMessage.addListener(
+extension.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
     console.log(sender.tab ?
                 "from a content script:" + sender.tab.url :
@@ -206,7 +208,7 @@ initialize().catch(log.error)
  * @returns {Promise} Setup complete.
  */
 async function initialize () {
-  chrome.storage.local.clear()  
+  extension.storage.local.clear()  
   const initState = await loadStateFromPersistence()
   console.log("initState")
   console.log(initState)
@@ -215,7 +217,7 @@ async function initialize () {
   log.debug('MetaMask initialization complete.')
   //ipfsHandle = ipfsContent(initState.NetworkController.provider)
 
-  chrome.storage.sync.get("smallet-info-v1", function (smalletInfo) {
+  extension.storage.sync.get("smallet-info-v1", function (smalletInfo) {
     console.log("smallet info from storage")
     console.log(smalletInfo)
     if (smalletInfo)

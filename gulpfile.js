@@ -66,10 +66,10 @@ createCopyTasks('images', {
   source: './app/images/',
   destinations: commonPlatforms.map(platform => `./dist/${platform}/images`),
 })
-createCopyTasks('contractImages', {
-  source: './node_modules/eth-contract-metadata/images/',
-  destinations: commonPlatforms.map(platform => `./dist/${platform}/images/contract`),
-})
+//createCopyTasks('contractImages', {
+//  source: './node_modules/eth-contract-metadata/images/',
+//  destinations: commonPlatforms.map(platform => `./dist/${platform}/images/contract`),
+//})
 createCopyTasks('fonts', {
   source: './app/fonts/',
   destinations: commonPlatforms.map(platform => `./dist/${platform}/fonts`),
@@ -267,7 +267,7 @@ const buildJsFiles = [
   'inpage-mobile',
   'contentscript',
   'background',
-  'ui',
+//  'ui',
 ]
 
 // bundle tasks

@@ -44,7 +44,7 @@ if (shouldInjectWeb3()) {
   })
 */  
 
-  chrome.runtime.sendMessage({action: "getSmalletInfo"}, function(response) { //==> to backgroud.js
+  extension.runtime.sendMessage({action: "getSmalletInfo"}, function(response) { //==> to backgroud.js
     console.log("contentscript response=");
     console.log(response);
     let event = new CustomEvent('SmalletConnet', { 
